@@ -16,8 +16,8 @@ import java.io.OutputStream;
 /**
  * Servlet implementation class TestServlet
  */
-@WebServlet("/test-servlet/*")
-public class TestServlet extends HttpServlet {
+@WebServlet("/create-access-token/*")
+public class CreateAccessTokenServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
        
 	/**
@@ -27,8 +27,8 @@ public class TestServlet extends HttpServlet {
 		// URL からデバイス名を取得します.
 		// e.g. /DesalinV1/test-servlet/sakura ---> デバイス名 "sakura"
 		String requestURI = request.getRequestURI();
-		int lastIndex = requestURI.lastIndexOf("/test-servlet/");
-		String deviceName = requestURI.substring(lastIndex + "/test-servlet/".length());
+		int lastIndex = requestURI.lastIndexOf("/create-access-token/");
+		String deviceName = requestURI.substring(lastIndex + "/create-access-token/".length());
 		System.out.println("🍉TestServlet#doGet: deviceName:" + deviceName);
 		
 		// リクエストボディのバイト列を取得.
@@ -75,7 +75,17 @@ public class TestServlet extends HttpServlet {
 				os.write(ret.toString().getBytes("UTF-8"));
 			}
 		} else {
-		
+			try {
+				ret = Operation.getAccessTokenFromRefreshToken(deviceName, refreshtoken);
+			} catch (Exception e) {
+				e.printStackTrace();
+				throw new ServletException("こまったちゃん");
+			}
+			response.setContentType("application/json; charset=UTF-8");
+			try (OutputStream os = response.getOutputStream()) {
+				os.write(ret.toString().getBytes("UTF-8"));
+			}
+			/*
 			response.setContentType("text/html; charset=UTF-8");
 			PrintWriter out = response.getWriter();
 			out.println("<!DOCTYPE html>");
@@ -110,6 +120,7 @@ public class TestServlet extends HttpServlet {
 			
 			out.println("</body>");
 			out.println("</html>");
+			*/
 		}
 	}
 }

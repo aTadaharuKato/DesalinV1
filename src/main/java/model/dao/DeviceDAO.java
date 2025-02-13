@@ -13,6 +13,7 @@ public class DeviceDAO {
 	
 	static final String SQL1 = "SELECT password FROM m_device WHERE device_id = ?";
 	static final String SQL2 = "SELECT access_token  FROM m_device WHERE device_id = ?";
+	static final String SQL6 = "SELECT refresh_token  FROM m_device WHERE device_id = ?";
 	static final String SQL3 = "SELECT update_dt  FROM m_device WHERE device_id = ?";
 	static final String SQL4 = "UPDATE m_device SET update_dt= ? WHERE device_id = ?";
 	static final String SQL5 = "UPDATE m_device SET access_token = ?, access_token_limit = ?,"
@@ -55,7 +56,20 @@ public class DeviceDAO {
 		}
 		return accessToken;
 	}
-	
+	public static String getRefreshTokenByDeviceId(String deviceId) throws Exception {
+		String refreshToken = null;
+		try (Connection con = MyConnection.getConnection(); PreparedStatement pstmt = con.prepareStatement(SQL6)) {
+			pstmt.setString(1, deviceId);
+			try (ResultSet res = pstmt.executeQuery()) {
+				if (res.next()) {
+					refreshToken = res.getString("refresh_token");
+				} else {
+					throw new Exception("The specified device ID is not registered.");
+				}
+			}
+		}
+		return refreshToken;
+	}
 	
 	
 	public static int updateTokens(String deviceId, String accessToken, java.util.Date accessTokenLimit, String refreshToken, java.util.Date refreshTokenLimit) throws Exception {
@@ -111,4 +125,6 @@ public class DeviceDAO {
 		}
 		return update_dt;
 	}
+
+
 }

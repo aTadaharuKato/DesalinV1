@@ -1,12 +1,9 @@
 package model;
 
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
-
 import org.json.JSONObject;
-
 import model.dao.DeviceDAO;
 
 public class Operation {
@@ -36,7 +33,12 @@ public class Operation {
 			myJsonObj.putOpt("result", "failed, Invalid password.");
 			return myJsonObj;
 		}
-		
+		issueTokens(deviceName, myJsonObj);
+		return myJsonObj;
+	}
+	
+	
+	private static void issueTokens(String deviceName, JSONObject myJsonObj) throws Exception {
 		String newAccessToken = MyHelper.generateToken();
 		String newRefreshToken = MyHelper.generateToken();
 		
@@ -49,8 +51,8 @@ public class Operation {
 		utc.set(Calendar.YEAR, utc.get(Calendar.YEAR) + 1);
 		Date refreshTokenLimitDate = new Date(utc.getTimeInMillis());
 		
-		System.out.println("accessTokenLimitDate:" + accessTokenLimitDate);
-		System.out.println("refreshTokenLimitDate:" + refreshTokenLimitDate);
+		//System.out.println("accessTokenLimitDate:" + accessTokenLimitDate);
+		//System.out.println("refreshTokenLimitDate:" + refreshTokenLimitDate);
 		
 		DeviceDAO.updateTokens(deviceName, newAccessToken, accessTokenLimitDate, newRefreshToken, refreshTokenLimitDate);
 		
@@ -63,12 +65,26 @@ public class Operation {
 		DeviceDAO.setUpdateTime(deviceName, new_date);
 		*/
 		
-		
-		
-		
 		myJsonObj.putOpt("token", newAccessToken);
 		myJsonObj.putOpt("refresh", newRefreshToken);
 		myJsonObj.putOpt("result", "success");
+	}
+
+	public static JSONObject getAccessTokenFromRefreshToken(String deviceName, String refreshtoken) throws Exception {
+		JSONObject myJsonObj = new JSONObject();
+		
+		String curRefreshToken = DeviceDAO.getRefreshTokenByDeviceId(deviceName);
+		System.out.println("curRefreshToken:" + curRefreshToken);
+		if (curRefreshToken == null) {
+			myJsonObj.putOpt("result", "failed, The refresh token is not set.");
+			return myJsonObj;
+		}
+		if (!curRefreshToken.equals(refreshtoken)) {
+			// リフレッシュトークンが一致しない場合は失敗.
+			myJsonObj.putOpt("result", "failed, Invalid refresh token.");
+			return myJsonObj;
+		}
+		issueTokens(deviceName, myJsonObj);
 		return myJsonObj;
 	}
 
