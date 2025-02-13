@@ -5,17 +5,13 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import model.Operation;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.net.URLDecoder;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import org.json.JSONObject;
-
 import java.io.InputStream;
+import java.io.OutputStream;
 
 /**
  * Servlet implementation class TestServlet
@@ -59,43 +55,61 @@ public class TestServlet extends HttpServlet {
 		
 		String password = jsonobj.optString("password");
 		String refreshtoken = jsonobj.optString("refresh");
+		
 		if (!password.isEmpty() && !refreshtoken.isEmpty()) {
 			throw new ServletException("Both \"password\" and \"refresh\" were specified.");
+		} else if (password.isEmpty() && refreshtoken.isEmpty()) {
+			throw new ServletException("Neither \"password\" nor \"refresh\" was specified.");
 		}
 		
-		response.setContentType("text/html; charset=UTF-8");
-		PrintWriter out = response.getWriter();
-		out.println("<!DOCTYPE html>");
-		out.println("<html>");
-		out.println("<head>");
-		out.println("<title>テスト</title>");
-		out.println("</head>");
-		out.println("<body>");
+		JSONObject ret;
+		if (!password.isEmpty()) {
+			try {
+				ret = Operation.getAccessTokenFromPassword(deviceName, password);
+			} catch (Exception e) {
+				e.printStackTrace();
+				throw new ServletException("こまったちゃん");
+			}
+			response.setContentType("application/json; charset=UTF-8");
+			try (OutputStream os = response.getOutputStream()) {
+				os.write(ret.toString().getBytes("UTF-8"));
+			}
+		} else {
 		
-		out.println("<p>");
-		out.println("getRequestURL:");
-		out.println(new String(request.getRequestURL()));
-		out.println("</p>");
+			response.setContentType("text/html; charset=UTF-8");
+			PrintWriter out = response.getWriter();
+			out.println("<!DOCTYPE html>");
+			out.println("<html>");
+			out.println("<head>");
+			out.println("<title>テスト</title>");
+			out.println("</head>");
+			out.println("<body>");
+			
+			out.println("<p>");
+			out.println("getRequestURL:");
+			out.println(new String(request.getRequestURL()));
+			out.println("</p>");
+			
+			out.println("<p>");
+			out.println("getRequestURI:");
+			out.println(request.getRequestURI());
+			out.println("</p>");
+			
+			out.println("<p>requestURL.lastIndexOf(\"/test-servlet/\") = " + lastIndex + "</p>");
+			out.println("<p>deviceName:\"" + deviceName + "\"</p>");
+			out.println("<p>ContentType:\"" + request.getContentType() + "\"</p>");
+			out.println("<p>ContentLength:" + request.getContentLength() + "</p>");
+			out.println("<p>password:" + password + "</p>");
+			out.println("<p>refreshtoken:" + refreshtoken + "</p>");
 		
-		out.println("<p>");
-		out.println("getRequestURI:");
-		out.println(request.getRequestURI());
-		out.println("</p>");
-		
-		out.println("<p>requestURL.lastIndexOf(\"/test-servlet/\") = " + lastIndex + "</p>");
-		out.println("<p>deviceName:\"" + deviceName + "\"</p>");
-		out.println("<p>ContentType:\"" + request.getContentType() + "\"</p>");
-		out.println("<p>ContentLength:" + request.getContentLength() + "</p>");
-		out.println("<p>password:" + password + "</p>");
-		out.println("<p>refreshtoken:" + refreshtoken + "</p>");
-	
-		
-		out.println("<p>");
-		out.println("getServletPath:");
-		out.println(request.getServletPath());
-		out.println("</p>");
-		
-		out.println("</body>");
-		out.println("</html>");
+			
+			out.println("<p>");
+			out.println("getServletPath:");
+			out.println(request.getServletPath());
+			out.println("</p>");
+			
+			out.println("</body>");
+			out.println("</html>");
+		}
 	}
 }
