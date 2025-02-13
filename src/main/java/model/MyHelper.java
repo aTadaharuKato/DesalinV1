@@ -3,6 +3,11 @@ package model;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.TimeZone;
+import java.io.IOException;
+import java.io.InputStream;
+import org.json.JSONObject;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 public final class MyHelper {
 	private MyHelper() {
@@ -65,7 +70,48 @@ public final class MyHelper {
 		return SDF_UTC.format(date);
 	}
 	
-	public static java.util.Date getDatefromDateTimeStringWithTZ(String dateTimeStr) throws ParseException {
-		return SDF.parse(dateTimeStr);	
+	public static java.util.Date getDatefromDateTimeStringWithTZ(String dateTimeStr) {
+		try {
+			return SDF.parse(dateTimeStr);
+		} catch (ParseException e) {
+			return null;
+		}	
+	}
+
+	
+	
+	
+	public static String getDeviceNameFromURI(String requestURI, String pattern) {
+		int lastIndex = requestURI.lastIndexOf(pattern);
+		String deviceName = requestURI.substring(lastIndex + pattern.length());
+		return deviceName;
+	}
+
+	
+	
+	public static JSONObject getJsonObjectFromRequestBody(HttpServletRequest request) throws IOException {
+		// リクエストボディのバイト列を取得.
+		int contentLength = request.getContentLength();
+		byte[] ba = new byte[contentLength];
+		try (InputStream is = request.getInputStream()) {
+			int rdsz;
+			for (int rdpos = 0; rdpos < contentLength; rdpos += rdsz) {
+				rdsz = is.read(ba, 0, contentLength - rdpos);
+				if (rdsz == -1) {
+					// 予期しない EOF を検出.
+					throw new IOException("unexpected requestbody length!");
+				}
+			}
+		}
+			
+		// リクエストボディのバイト列を文字列に変換.
+		String instr = new String(ba, "UTF-8");
+		System.out.println("instr:" + instr);
+		
+		// リクエストボディのバイト列より，ｌJSON オブジェクトを生成.
+		JSONObject jsonobj = new JSONObject(instr);
+		System.out.println("jsonobj:" + jsonobj);
+		
+		return jsonobj;
 	}
 }
