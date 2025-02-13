@@ -5,10 +5,40 @@ import java.util.Date;
 import java.util.TimeZone;
 import org.json.JSONObject;
 import model.dao.DeviceDAO;
+import model.dao.HeartBeatDAO;
+import model.dao.TemperatureDAO;
 
-public class Operation {
+public final class Operation {
+	private Operation() {
+	}
+	
+	public static final int SUCCESS_ACCESSTOKEN_CHECK = 1;
+	public static final int ERROR_ACCESSTOKEN_NOT_EXIST = 1;
+	public static final int ERROR_ACCESSTOKEN_NOT_MATCH = 2;
+	public static final int ERROR_ACCESSTOKEN_IS_EXPIRED = 3;
 
-	public static JSONObject getAccessTokenFromPassword(String deviceName, String password) throws Exception {
+
+	public static boolean checkAccessToken(String deviceName, String token, JSONObject myJsonObj) throws Exception {
+		
+		// TODO 自動生成されたメソッド・スタブ
+		String accessToken = DeviceDAO.getAccessTokenByDeviceId(deviceName);
+		if (accessToken == null) {
+			myJsonObj.putOpt("result", "failed, Access token not exist.");
+			return false;
+		}
+		if (!accessToken.equals(token)) {
+			myJsonObj.putOpt("result", "failed, Access token not match.");
+			return false;
+		}
+		Date accessTokenLimit = DeviceDAO.getAccessTokenLimitByDeviceId(deviceName);
+		if (accessTokenLimit.before(new Date())) {
+			myJsonObj.putOpt("result", "failed, Access token is Expired.");
+			return false;
+		}
+		return true;
+	}
+
+	public static JSONObject issueAccessTokenFromPassword(String deviceName, String password) throws Exception {
 		
 		JSONObject myJsonObj = new JSONObject();
 		String accessToken = DeviceDAO.getAccessTokenByDeviceId(deviceName);
@@ -44,8 +74,8 @@ public class Operation {
 		
 		Calendar utc = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
 		
-		// アクセストークンの期限は，テスト用の短く 3 分を設定します.
-		Date accessTokenLimitDate = new Date(utc.getTimeInMillis() + (3L * 60L * 1000L));
+		// アクセストークンの期限は，テスト用に短く 3 分を設定します.
+		Date accessTokenLimitDate = new Date(utc.getTimeInMillis() + (MyHelper.CONFIG_ACCESSTOKEN_VALIDTIME_IN_MINUTE * 60L * 1000L));
 		
 		// リフレッシュトークンの期限は，1年に設定しておきます.
 		utc.set(Calendar.YEAR, utc.get(Calendar.YEAR) + 1);
@@ -70,7 +100,7 @@ public class Operation {
 		myJsonObj.putOpt("result", "success");
 	}
 
-	public static JSONObject getAccessTokenFromRefreshToken(String deviceName, String refreshtoken) throws Exception {
+	public static JSONObject issueAccessTokenFromRefreshToken(String deviceName, String refreshtoken) throws Exception {
 		JSONObject myJsonObj = new JSONObject();
 		
 		String curRefreshToken = DeviceDAO.getRefreshTokenByDeviceId(deviceName);
@@ -84,8 +114,29 @@ public class Operation {
 			myJsonObj.putOpt("result", "failed, Invalid refresh token.");
 			return myJsonObj;
 		}
+		Date accessTokenLimit = DeviceDAO.getRefreshTokenLimitByDeviceId(deviceName);
+		if (accessTokenLimit.before(new Date())) {
+			// リフレッシュトークンが期限切れの場合.
+			myJsonObj.putOpt("result", "failed, Refresh Token is expired.");
+			return myJsonObj;
+		}
+		
 		issueTokens(deviceName, myJsonObj);
 		return myJsonObj;
 	}
 
+	public static JSONObject registNewData(String deviceName, String token, Date datetime, Double temperature, int heartbeat) throws Exception {
+		JSONObject myJsonObj = new JSONObject();
+		if (checkAccessToken(deviceName, token, myJsonObj) == false) {
+			return myJsonObj;
+		}
+		if (temperature != Double.NaN) {
+			TemperatureDAO.registNewData(deviceName, temperature, datetime);
+		}
+		if (heartbeat != Integer.MIN_VALUE) {
+			HeartBeatDAO.registNewData(deviceName, heartbeat, datetime);
+		}
+		myJsonObj.putOpt("result", "success");
+		return myJsonObj;
+	}
 }

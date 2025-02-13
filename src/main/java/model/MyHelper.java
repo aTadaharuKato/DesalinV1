@@ -1,7 +1,24 @@
 package model;
 
-public final class MyHelper {
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.TimeZone;
 
+public final class MyHelper {
+	private MyHelper() {
+	}
+	
+	/** アクセストークンの有効期限の分数です. */
+	public static final int CONFIG_ACCESSTOKEN_VALIDTIME_IN_MINUTE = 30;
+
+	private static final SimpleDateFormat SDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
+	private static final SimpleDateFormat SDF_UTC = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+	
+	static {
+		SDF_UTC.setTimeZone(TimeZone.getTimeZone("UTC"));
+	}
+
+	
 	private static final char CH[] = { 
 			'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C',
 			'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 
@@ -42,5 +59,13 @@ public final class MyHelper {
 				}
 			}
 		}
+	}
+	
+	public static String toUTCTimeString(java.util.Date date) {
+		return SDF_UTC.format(date);
+	}
+	
+	public static java.util.Date getDatefromDateTimeStringWithTZ(String dateTimeStr) throws ParseException {
+		return SDF.parse(dateTimeStr);	
 	}
 }

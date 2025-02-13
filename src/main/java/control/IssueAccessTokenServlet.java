@@ -17,7 +17,7 @@ import java.io.OutputStream;
  * Servlet implementation class TestServlet
  */
 @WebServlet("/create-access-token/*")
-public class CreateAccessTokenServlet extends HttpServlet {
+public class IssueAccessTokenServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
        
 	/**
@@ -65,23 +65,29 @@ public class CreateAccessTokenServlet extends HttpServlet {
 		JSONObject ret;
 		if (!password.isEmpty()) {
 			try {
-				ret = Operation.getAccessTokenFromPassword(deviceName, password);
+				ret = Operation.issueAccessTokenFromPassword(deviceName, password);
 			} catch (Exception e) {
 				e.printStackTrace();
 				throw new ServletException("こまったちゃん");
 			}
 			response.setContentType("application/json; charset=UTF-8");
+			if (!ret.optString("result").equals("success")) {
+				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+			}
 			try (OutputStream os = response.getOutputStream()) {
 				os.write(ret.toString().getBytes("UTF-8"));
 			}
 		} else {
 			try {
-				ret = Operation.getAccessTokenFromRefreshToken(deviceName, refreshtoken);
+				ret = Operation.issueAccessTokenFromRefreshToken(deviceName, refreshtoken);
 			} catch (Exception e) {
 				e.printStackTrace();
 				throw new ServletException("こまったちゃん");
 			}
 			response.setContentType("application/json; charset=UTF-8");
+			if (!ret.optString("result").equals("success")) {
+				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+			}
 			try (OutputStream os = response.getOutputStream()) {
 				os.write(ret.toString().getBytes("UTF-8"));
 			}
@@ -122,5 +128,6 @@ public class CreateAccessTokenServlet extends HttpServlet {
 			out.println("</html>");
 			*/
 		}
+		//response.sendError(400, "おろかものめ");
 	}
 }

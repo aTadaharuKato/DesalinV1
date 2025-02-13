@@ -4,12 +4,12 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.TimeZone;
+import model.MyHelper;
 
 public class DeviceDAO {
-
+	private DeviceDAO() {
+	}
 	
 	static final String SQL1 = "SELECT password FROM m_device WHERE device_id = ?";
 	static final String SQL2 = "SELECT access_token  FROM m_device WHERE device_id = ?";
@@ -18,20 +18,14 @@ public class DeviceDAO {
 	static final String SQL4 = "UPDATE m_device SET update_dt= ? WHERE device_id = ?";
 	static final String SQL5 = "UPDATE m_device SET access_token = ?, access_token_limit = ?,"
 							 + " refresh_token = ?, refresh_token_limit = ? WHERE device_id = ?";
-	static final SimpleDateFormat SDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
-	static final SimpleDateFormat SDF_UTC = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");;
-	
-	static {
-		SDF_UTC.setTimeZone(TimeZone.getTimeZone("UTC"));
-	}
-	
-
+	static final String SQL7 = "SELECT access_token_limit  FROM m_device WHERE device_id = ?";
+	static final String SQL8 = "SELECT refresh_token_limit  FROM m_device WHERE device_id = ?";
 	
 	public static String getPasswordByDeviceId(String deviceId) throws Exception {
 		String password = null;
-		try (Connection con = MyConnection.getConnection(); PreparedStatement pstmt = con.prepareStatement(SQL1)) {
-			pstmt.setString(1, deviceId);
-			try (ResultSet res = pstmt.executeQuery()) {
+		try (Connection con = MyConnection.getConnection(); PreparedStatement pstmt_sql1 = con.prepareStatement(SQL1)) {
+			pstmt_sql1.setString(1, deviceId);
+			try (ResultSet res = pstmt_sql1.executeQuery()) {
 				if (res.next()) {
 					password = res.getString("password");
 				} else {
@@ -75,9 +69,9 @@ public class DeviceDAO {
 	public static int updateTokens(String deviceId, String accessToken, java.util.Date accessTokenLimit, String refreshToken, java.util.Date refreshTokenLimit) throws Exception {
 		try (Connection con = MyConnection.getConnection(); PreparedStatement pstmt = con.prepareStatement(SQL5)) {
 			pstmt.setString(1, accessToken);
-			pstmt.setString(2, SDF_UTC.format(accessTokenLimit));
+			pstmt.setString(2, MyHelper.toUTCTimeString(accessTokenLimit));
 			pstmt.setString(3, refreshToken);
-			pstmt.setString(4, SDF_UTC.format(refreshTokenLimit));
+			pstmt.setString(4, MyHelper.toUTCTimeString(refreshTokenLimit));
 			pstmt.setString(5, deviceId);
 			return pstmt.executeUpdate();
 		}
@@ -94,7 +88,7 @@ public class DeviceDAO {
 	 */
 	public static int setUpdateTime(String deviceId, java.util.Date update_dt) throws Exception {
 		try (Connection con = MyConnection.getConnection(); PreparedStatement pstmt = con.prepareStatement(SQL4)) {
-			pstmt.setString(1, SDF_UTC.format(update_dt));
+			pstmt.setString(1, MyHelper.toUTCTimeString(update_dt));
 			pstmt.setString(2, deviceId);
 			return pstmt.executeUpdate();
 		}
@@ -117,7 +111,7 @@ public class DeviceDAO {
 				if (res.next()) {
 					String update_dts = res.getString("update_dt");
 					//System.out.println("update_dt (String):" + update_dts);
-					update_dt = SDF.parse(update_dts + " UTC");
+					update_dt = MyHelper.getDatefromDateTimeStringWithTZ(update_dts + " UTC");
 				} else {
 					throw new Exception("The specified device ID is not registered.");
 				}
@@ -125,6 +119,37 @@ public class DeviceDAO {
 		}
 		return update_dt;
 	}
+	
+	public static java.util.Date getAccessTokenLimitByDeviceId(String deviceId) throws Exception {
+		java.util.Date access_token_limit;
+		try (Connection con = MyConnection.getConnection(); PreparedStatement pstmt = con.prepareStatement(SQL7)) {
+			pstmt.setString(1, deviceId);
+			try (ResultSet res = pstmt.executeQuery()) {
+				if (res.next()) {
+					String update_dts = res.getString("access_token_limit");
+					access_token_limit = MyHelper.getDatefromDateTimeStringWithTZ(update_dts + " UTC");
+				} else {
+					throw new Exception("The specified device ID is not registered.");
+				}
+			}
+		}
+		return access_token_limit;
+	}
 
+	public static java.util.Date getRefreshTokenLimitByDeviceId(String deviceId) throws Exception {
+		java.util.Date refresh_token_limit;
+		try (Connection con = MyConnection.getConnection(); PreparedStatement pstmt = con.prepareStatement(SQL8)) {
+			pstmt.setString(1, deviceId);
+			try (ResultSet res = pstmt.executeQuery()) {
+				if (res.next()) {
+					String update_dts = res.getString("refresh_token_limit");
+					refresh_token_limit = MyHelper.getDatefromDateTimeStringWithTZ(update_dts + " UTC");
+				} else {
+					throw new Exception("The specified device ID is not registered.");
+				}
+			}
+		}
+		return refresh_token_limit;
+	}
 
 }
