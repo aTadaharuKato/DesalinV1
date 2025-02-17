@@ -24,6 +24,10 @@ public class DataUploadServlet extends HttpServlet {
 	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		//String va = getServletContext().getInitParameter("DATABASE_URL");
+		//System.out.println("DATABASE_URL：" + va);
+		
+		
 		String deviceName = MyHelper.getDeviceNameFromURI(request.getRequestURI(), "/data-upload/");
 		JSONObject jsonobj = MyHelper.getJsonObjectFromRequestBody(request);
 

@@ -3,14 +3,15 @@ package model.dao;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-//import org.mariadb.jdbc.internal.util.constant.Version;
 
 public final class MyConnection {
 	/**
 	 * データベースURL
 	 */
 	//private final static String URL = "jdbc:mysql://raspi.local/test2025a?characterEncoding=UTF-8&serverTimezone=Asia/Tokyo";
-	private final static String URL = "jdbc:mariadb://raspi.local/test2025a?characterEncoding=UTF-8&serverTimezone=Asia/Tokyo";
+	//private final static String URL = "jdbc:mariadb://raspi.local/test2025a?characterEncoding=UTF-8&serverTimezone=Asia/Tokyo";
+	private final static String URL = "jdbc:mariadb://localhost/test2025a?characterEncoding=UTF-8&serverTimezone=Asia/Tokyo";
+	
 	
 	/**
 	 * 接続ユーザ
@@ -20,7 +21,7 @@ public final class MyConnection {
 	/**
 	 * パスワード
 	 */
-	private final static String PASSWORD = "katodec25";
+	private final static String PASSWORD = "otou3gogo";
 
 	/**
 	 * データベース接続を行い 接続情報を返す
@@ -33,7 +34,6 @@ public final class MyConnection {
 		// JDBCドライバの読み込み
 		//Class.forName("com.mysql.cj.jdbc.Driver");
 		Class.forName("org.mariadb.jdbc.Driver");
-		//System.out.println("Connector/J " + Version.version + "\n");
 
 		return DriverManager.getConnection(URL, USER, PASSWORD);
 

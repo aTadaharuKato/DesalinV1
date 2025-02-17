@@ -9,4 +9,12 @@
     <welcome-file>default.jsp</welcome-file>
     <welcome-file>default.htm</welcome-file>
   </welcome-file-list>
+  
+  <!-- 
+ <context-param>
+    <param-name>DATABASE_URL</param-name>
+    <param-value>jdbc:mariadb://raspi.local/test2025a?characterEncoding=UTF-8&amp;serverTimezone=Asia/Tokyo</param-value>
+  </context-param>
+   -->
+  
 </web-app>
