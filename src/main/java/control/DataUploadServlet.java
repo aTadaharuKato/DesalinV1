@@ -7,13 +7,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import model.MyHelper;
 import model.Operation;
-import model.dao.TemperatureDAO;
-
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.text.ParseException;
 import java.util.Date;
 
 import org.json.JSONObject;

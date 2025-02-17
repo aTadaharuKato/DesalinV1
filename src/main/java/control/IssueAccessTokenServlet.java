@@ -25,7 +25,7 @@ public class IssueAccessTokenServlet extends HttpServlet {
 	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		String deviceName = MyHelper.getDeviceNameFromURI(request.getRequestURI(), "/data-upload/");
+		String deviceName = MyHelper.getDeviceNameFromURI(request.getRequestURI(), "/issue-access-token/");
 		JSONObject jsonobj = MyHelper.getJsonObjectFromRequestBody(request);
 		
 		String password = jsonobj.optString("password");

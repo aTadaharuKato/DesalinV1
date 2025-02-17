@@ -1,12 +1,15 @@
 package model;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
+
+import org.json.JSONArray;
 import org.json.JSONObject;
-import model.dao.DeviceDAO;
-import model.dao.HeartBeatDAO;
-import model.dao.TemperatureDAO;
+import model.dao.DAODevice;
+import model.dao.DAOHeartBeat;
+import model.dao.DAOTemperature;
 
 public final class Operation {
 	private Operation() {
@@ -21,7 +24,7 @@ public final class Operation {
 	public static boolean checkAccessToken(String deviceName, String token, JSONObject myJsonObj) throws Exception {
 		
 		// TODO 自動生成されたメソッド・スタブ
-		String accessToken = DeviceDAO.getAccessTokenByDeviceId(deviceName);
+		String accessToken = DAODevice.getAccessTokenByDeviceId(deviceName);
 		if (accessToken == null) {
 			myJsonObj.putOpt("result", "failed, Access token not exist.");
 			return false;
@@ -30,7 +33,7 @@ public final class Operation {
 			myJsonObj.putOpt("result", "failed, Access token not match.");
 			return false;
 		}
-		Date accessTokenLimit = DeviceDAO.getAccessTokenLimitByDeviceId(deviceName);
+		Date accessTokenLimit = DAODevice.getAccessTokenLimitByDeviceId(deviceName);
 		if (accessTokenLimit.before(new Date())) {
 			myJsonObj.putOpt("result", "failed, Access token is Expired.");
 			return false;
@@ -41,7 +44,7 @@ public final class Operation {
 	public static JSONObject issueAccessTokenFromPassword(String deviceName, String password) throws Exception {
 		
 		JSONObject myJsonObj = new JSONObject();
-		String accessToken = DeviceDAO.getAccessTokenByDeviceId(deviceName);
+		String accessToken = DAODevice.getAccessTokenByDeviceId(deviceName);
 		System.out.println("accessToken:" + accessToken);
 		if (accessToken != null) {
 			// すでにアクセストークンが発行されている場合は，パスワードでのアクセストークン発行は出来ません。
@@ -53,7 +56,7 @@ public final class Operation {
 		}
 		
 		// パスワードをチェックする.
-		String registed_password = DeviceDAO.getPasswordByDeviceId(deviceName);
+		String registed_password = DAODevice.getPasswordByDeviceId(deviceName);
 		System.out.println("registed_password: \"" + registed_password + "\"");
 		System.out.println("password: \"" + password + "\"");
 		System.out.println("registed_password == password:" + (registed_password == password));
@@ -84,7 +87,7 @@ public final class Operation {
 		//System.out.println("accessTokenLimitDate:" + accessTokenLimitDate);
 		//System.out.println("refreshTokenLimitDate:" + refreshTokenLimitDate);
 		
-		DeviceDAO.updateTokens(deviceName, newAccessToken, accessTokenLimitDate, newRefreshToken, refreshTokenLimitDate);
+		DAODevice.updateTokens(deviceName, newAccessToken, accessTokenLimitDate, newRefreshToken, refreshTokenLimitDate);
 		
 		
 		/* update_dt の取得／更新の試験コード
@@ -103,7 +106,7 @@ public final class Operation {
 	public static JSONObject issueAccessTokenFromRefreshToken(String deviceName, String refreshtoken) throws Exception {
 		JSONObject myJsonObj = new JSONObject();
 		
-		String curRefreshToken = DeviceDAO.getRefreshTokenByDeviceId(deviceName);
+		String curRefreshToken = DAODevice.getRefreshTokenByDeviceId(deviceName);
 		System.out.println("curRefreshToken:" + curRefreshToken);
 		if (curRefreshToken == null) {
 			myJsonObj.putOpt("result", "failed, The refresh token is not set.");
@@ -114,7 +117,7 @@ public final class Operation {
 			myJsonObj.putOpt("result", "failed, Invalid refresh token.");
 			return myJsonObj;
 		}
-		Date accessTokenLimit = DeviceDAO.getRefreshTokenLimitByDeviceId(deviceName);
+		Date accessTokenLimit = DAODevice.getRefreshTokenLimitByDeviceId(deviceName);
 		if (accessTokenLimit.before(new Date())) {
 			// リフレッシュトークンが期限切れの場合.
 			myJsonObj.putOpt("result", "failed, Refresh Token is expired.");
@@ -131,12 +134,58 @@ public final class Operation {
 			return myJsonObj;
 		}
 		if (temperature != Double.NaN) {
-			TemperatureDAO.registNewData(deviceName, temperature, datetime);
+			DAOTemperature.registNewData(deviceName, temperature, datetime);
 		}
 		if (heartbeat != Integer.MIN_VALUE) {
-			HeartBeatDAO.registNewData(deviceName, heartbeat, datetime);
+			DAOHeartBeat.registNewData(deviceName, heartbeat, datetime);
+		}
+		myJsonObj.putOpt("result", "success");
+		return myJsonObj;
+	}
+
+	public static JSONObject registNewDataArray(String deviceName, String token, JSONArray array) throws Exception {
+		System.out.println("Operation#registNewDataArray()");
+		JSONObject myJsonObj = new JSONObject();
+		if (checkAccessToken(deviceName, token, myJsonObj) == false) {
+			return myJsonObj;
+		}
+		
+		
+		System.out.println("array:" + array);
+		System.out.println("array length:" + array.length());
+		ArrayList<ElemTemperature> tempArray = new ArrayList<>();
+		ArrayList<ElemHeartBeat> hbeatArray = new ArrayList<>();
+		for (int i = 0; i < array.length(); i++) {
+			JSONObject obj = array.getJSONObject(i);
+			System.out.println("[" + i + "] " + obj);
+			Date datetime = MyHelper.getDatefromDateTimeStringWithTZ(obj.optString("datetime"));
+			if (datetime == null) {
+				throw new Exception("bad datetime");
+			}
+			Double temperature = obj.optDouble("temperature", Double.NaN);
+			if (temperature != Double.NaN) {
+				tempArray.add(new ElemTemperature(temperature, datetime));
+			}
+			int heartbeat = obj.optInt("heartbeat", Integer.MIN_VALUE);
+			if (heartbeat != Integer.MIN_VALUE) {
+				hbeatArray.add(new ElemHeartBeat(heartbeat, datetime));
+			}
+			System.out.println("datetime:" + datetime);
+		}
+		System.out.println("tempArray:" + tempArray);
+		System.out.println("hbeatArray:" + hbeatArray);
+		if (!tempArray.isEmpty()) {
+			DAOTemperature.registNewDataArray(deviceName, tempArray);
+		}
+		if (!hbeatArray.isEmpty()) {
+			DAOHeartBeat.registNewDataArray(deviceName, hbeatArray);
 		}
 		myJsonObj.putOpt("result", "success");
 		return myJsonObj;
 	}
 }
+
+
+
+
+

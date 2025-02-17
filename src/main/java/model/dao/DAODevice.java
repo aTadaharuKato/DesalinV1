@@ -7,8 +7,8 @@ import java.text.SimpleDateFormat;
 import java.util.TimeZone;
 import model.MyHelper;
 
-public class DeviceDAO {
-	private DeviceDAO() {
+public class DAODevice {
+	private DAODevice() {
 	}
 	
 	static final String SQL1 = "SELECT password FROM m_device WHERE device_id = ?";
