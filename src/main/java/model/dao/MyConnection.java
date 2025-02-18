@@ -9,8 +9,8 @@ public final class MyConnection {
 	 * データベースURL
 	 */
 	//private final static String URL = "jdbc:mysql://raspi.local/test2025a?characterEncoding=UTF-8&serverTimezone=Asia/Tokyo";
-	//private final static String URL = "jdbc:mariadb://raspi.local/test2025a?characterEncoding=UTF-8&serverTimezone=Asia/Tokyo";
-	private final static String URL = "jdbc:mariadb://localhost/test2025a?characterEncoding=UTF-8&serverTimezone=Asia/Tokyo";
+	private final static String URL = "jdbc:mariadb://raspi.local/test2025a?characterEncoding=UTF-8&serverTimezone=Asia/Tokyo";
+	//private final static String URL = "jdbc:mariadb://localhost/test2025a?characterEncoding=UTF-8&serverTimezone=Asia/Tokyo";
 	
 	
 	/**

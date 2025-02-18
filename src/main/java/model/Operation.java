@@ -8,6 +8,7 @@ import java.util.TimeZone;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import model.dao.DAODevice;
+import model.dao.DAOEmvironment;
 import model.dao.DAOHeartBeat;
 import model.dao.DAOTemperature;
 
@@ -128,7 +129,7 @@ public final class Operation {
 		return myJsonObj;
 	}
 
-	public static JSONObject registNewData(String deviceName, String token, Date datetime, Double temperature, int heartbeat) throws Exception {
+	public static JSONObject registNewData(String deviceName, String token, Date datetime, double temperature, int heartbeat) throws Exception {
 		JSONObject myJsonObj = new JSONObject();
 		if (checkAccessToken(deviceName, token, myJsonObj) == false) {
 			return myJsonObj;
@@ -162,7 +163,7 @@ public final class Operation {
 			if (datetime == null) {
 				throw new Exception("bad datetime");
 			}
-			Double temperature = obj.optDouble("temperature", Double.NaN);
+			double temperature = obj.optDouble("temperature", Double.NaN);
 			if (temperature != Double.NaN) {
 				tempArray.add(new ElemTemperature(temperature, datetime));
 			}
@@ -180,6 +181,32 @@ public final class Operation {
 		if (!hbeatArray.isEmpty()) {
 			DAOHeartBeat.registNewDataArray(deviceName, hbeatArray);
 		}
+		myJsonObj.putOpt("result", "success");
+		return myJsonObj;
+	}
+
+	public static JSONObject registNewEnvDataArray(String deviceName, String token, JSONArray array) throws Exception {
+		System.out.println("Operation#registNewEnvDataArray()");
+		JSONObject myJsonObj = new JSONObject();
+		if (checkAccessToken(deviceName, token, myJsonObj) == false) {
+			return myJsonObj;
+		}
+		System.out.println("array:" + array);
+		System.out.println("array length:" + array.length());
+		ArrayList<ElemEnvironmentSensor> envArray = new ArrayList<>();
+		for (int i = 0; i < array.length(); i++) {
+			JSONObject obj = array.getJSONObject(i);
+			System.out.println("[" + i + "] " + obj);
+			Date datetime = MyHelper.getDatefromDateTimeStringWithTZ(obj.optString("datetime"));
+			double temperature = obj.optDouble("temperature", Double.NaN);
+			int humidity = obj.optInt("humidity", Integer.MIN_VALUE);
+			double pressure = obj.optDouble("pressure", Double.NaN);
+			if ((datetime == null) || (temperature == Double.NaN) || (humidity == Integer.MIN_VALUE) || (pressure == Double.NaN)) {
+				throw new Exception("bad datetime");
+			}
+			envArray.add(new ElemEnvironmentSensor(temperature, humidity, pressure, datetime));
+		}
+		DAOEmvironment.registNewDataArray(deviceName, envArray);
 		myJsonObj.putOpt("result", "success");
 		return myJsonObj;
 	}
