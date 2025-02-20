@@ -23,10 +23,13 @@ public final class DAOEmvironment {
 			try (ResultSet res = pstmt.executeQuery()) {
 				if (res.next()) {
 					//String deviceId = res.getString("device_id");
-					float temperature = res.getFloat("temperature");
+					double temperature = res.getFloat("temperature");
 					int humidity = res.getInt("humidity");
-					float pressure = res.getFloat("pressure");
+					double pressure = res.getFloat("pressure");
 					String dtstr = res.getString("rec_dt");
+					
+					temperature = Math.round(temperature * 10.0) / 10.0;
+					pressure = Math.round(pressure * 10.0) / 10.0;
 					//System.out.println("temperature:" + temperature);
 					//System.out.println("humidity:" + humidity);
 					//System.out.println("pressure:" + pressure);

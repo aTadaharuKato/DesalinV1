@@ -231,7 +231,7 @@ public final class Operation {
 	}
 
 	public static JSONObject getLastEnvData(String userId, String password, String deviceName) throws Exception {
-		//System.out.println("Operation#getLastEnvData()");
+		System.out.println("Operation#getLastEnvData()");
 		JSONObject myJsonObj = new JSONObject();
 		
 		if (checkUserAndDevice(userId, password, deviceName, myJsonObj) == false) {

@@ -61,6 +61,8 @@ public class GetLastEnvDataServlet extends HttpServlet {
 		try {
 			JSONObject ret = Operation.getLastEnvData(userId, password, deviceName);
 			response.setContentType("application/json; charset=UTF-8");
+			//response.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");
+			response.setHeader("Access-Control-Allow-Origin", "*");
 			
 			if (!ret.optString("result").equals("success")) {
 				response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
