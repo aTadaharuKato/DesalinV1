@@ -10,6 +10,7 @@ import org.json.JSONObject;
 import model.dao.DAODevice;
 import model.dao.DAOEmvironment;
 import model.dao.DAOHeartBeat;
+import model.dao.DAOPassword;
 import model.dao.DAOTemperature;
 
 public final class Operation {
@@ -21,6 +22,24 @@ public final class Operation {
 	public static final int ERROR_ACCESSTOKEN_NOT_MATCH = 2;
 	public static final int ERROR_ACCESSTOKEN_IS_EXPIRED = 3;
 
+	public static boolean checkUserAndDevice(String userId, String password, String deviceName, JSONObject myJsonObj) throws Exception {
+		String owner = DAODevice.getOwnerByDeviceId(deviceName);
+		//System.out.println("owner:" + owner);
+		if (!owner.equals(userId)) {
+			// ユーザ名が，デバイスの所有者と一致しない場合.
+			myJsonObj.putOpt("result", "failed, The user is not the device owner.");
+			return false;
+		}
+		String original_password = DAOPassword.getPasswordByUserId(userId);
+		//System.out.println("original_password:" + original_password);
+		if (!original_password.equals(password)) {
+			// パスワードが一致しない.
+			myJsonObj.putOpt("result", "failed, Passwords do not match.");
+			return false;
+		}
+		return true;
+	}
+	
 
 	public static boolean checkAccessToken(String deviceName, String token, JSONObject myJsonObj) throws Exception {
 		
@@ -207,6 +226,23 @@ public final class Operation {
 			envArray.add(new ElemEnvironmentSensor(temperature, humidity, pressure, datetime));
 		}
 		DAOEmvironment.registNewDataArray(deviceName, envArray);
+		myJsonObj.putOpt("result", "success");
+		return myJsonObj;
+	}
+
+	public static JSONObject getLastEnvData(String userId, String password, String deviceName) throws Exception {
+		//System.out.println("Operation#getLastEnvData()");
+		JSONObject myJsonObj = new JSONObject();
+		
+		if (checkUserAndDevice(userId, password, deviceName, myJsonObj) == false) {
+			return myJsonObj;
+		}
+		ElemEnvironmentSensor rec = DAOEmvironment.getLastDataByDeviceId(deviceName);
+		myJsonObj.put("temperature", rec.getTemperature());
+		myJsonObj.put("humidity", rec.getHumidity());
+		myJsonObj.put("pressure", rec.getPressure());
+		myJsonObj.put("datetime", MyHelper.toUTCTimeString(rec.getDatetime()) + " UTC");
+
 		myJsonObj.putOpt("result", "success");
 		return myJsonObj;
 	}

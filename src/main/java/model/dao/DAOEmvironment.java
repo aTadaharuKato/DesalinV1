@@ -2,16 +2,44 @@ package model.dao;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.Date;
 
 import model.ElemEnvironmentSensor;
 import model.MyHelper;
 
-public class DAOEmvironment {
+public final class DAOEmvironment {
 	private DAOEmvironment() {
 	}
 	static final String SQL1 = "INSERT INTO t_environment(device_id, temperature, humidity, pressure, rec_dt) VALUES(?, ?, ?, ?, ?)";
 	
+	static final String SQL2 = "SELECT * FROM t_environment WHERE device_id = ? ORDER BY rec_id DESC LIMIT 1";
+	
+	
+	public static ElemEnvironmentSensor getLastDataByDeviceId(String deviceId) throws Exception {
+		try (Connection con = MyConnection.getConnection(); PreparedStatement pstmt = con.prepareStatement(SQL2)) {
+			pstmt.setString(1, deviceId);
+			try (ResultSet res = pstmt.executeQuery()) {
+				if (res.next()) {
+					//String deviceId = res.getString("device_id");
+					float temperature = res.getFloat("temperature");
+					int humidity = res.getInt("humidity");
+					float pressure = res.getFloat("pressure");
+					String dtstr = res.getString("rec_dt");
+					//System.out.println("temperature:" + temperature);
+					//System.out.println("humidity:" + humidity);
+					//System.out.println("pressure:" + pressure);
+					//System.out.println("dtstr:" + dtstr);
+					Date dt = MyHelper.getDatefromDateTimeStringWithTZ(dtstr + " UTC");
+					//System.out.println("dt:" + dt);
+					return new ElemEnvironmentSensor(temperature, humidity, pressure, dt);
+				} else {
+					throw new Exception("The specified device ID is not registered.");
+				}
+			}
+		}
+	}
 	
 	public static int registNewData(String deviceId, double temperature, int humidity, double pressure, java.util.Date recDate) throws Exception {
 		try (Connection con = MyConnection.getConnection(); PreparedStatement pstmt = con.prepareStatement(SQL1)) {
