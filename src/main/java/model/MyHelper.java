@@ -3,6 +3,7 @@ package model;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.TimeZone;
+import java.util.stream.Collectors;
 import java.io.IOException;
 import java.io.InputStream;
 import org.json.JSONObject;
@@ -90,28 +91,44 @@ public final class MyHelper {
 	
 	
 	public static JSONObject getJsonObjectFromRequestBody(HttpServletRequest request) throws IOException {
-		// リクエストボディのバイト列を取得.
-		int contentLength = request.getContentLength();
-		byte[] ba = new byte[contentLength];
-		try (InputStream is = request.getInputStream()) {
-			int rdsz;
-			for (int rdpos = 0; rdpos < contentLength; rdpos += rdsz) {
-				rdsz = is.read(ba, 0, contentLength - rdpos);
-				if (rdsz == -1) {
-					// 予期しない EOF を検出.
-					throw new IOException("unexpected requestbody length!");
-				}
-			}
-		}
+		try {
+			String instr = request.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
+			System.out.println("instr:" + instr);
+
+			// リクエストボディのバイト列より，ｌJSON オブジェクトを生成.
+			JSONObject jsonobj = new JSONObject(instr);
+			System.out.println("jsonobj:" + jsonobj);
 			
-		// リクエストボディのバイト列を文字列に変換.
-		String instr = new String(ba, "UTF-8");
-		System.out.println("instr:" + instr);
+			return jsonobj;
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new IOException();
+		}
 		
-		// リクエストボディのバイト列より，ｌJSON オブジェクトを生成.
-		JSONObject jsonobj = new JSONObject(instr);
-		System.out.println("jsonobj:" + jsonobj);
 		
-		return jsonobj;
+//		// リクエストボディのバイト列を取得.
+//		int contentLength = request.getContentLength();
+//		byte[] ba = new byte[contentLength];
+//		try (InputStream is = request.getInputStream()) {
+//			int rdsz;
+//			for (int rdpos = 0; rdpos < contentLength; rdpos += rdsz) {
+//				rdsz = is.read(ba, 0, contentLength - rdpos);
+//				if (rdsz == -1) {
+//					// 予期しない EOF を検出.
+//					throw new IOException("unexpected requestbody length!");
+//				}
+//			}
+//		}
+//			
+//		// リクエストボディのバイト列を文字列に変換.
+//		String instr = new String(ba, "UTF-8");
+//		System.out.println("instr:" + instr);
+//		
+//		// リクエストボディのバイト列より，ｌJSON オブジェクトを生成.
+//		JSONObject jsonobj = new JSONObject(instr);
+//		System.out.println("jsonobj:" + jsonobj);
+//		
+//		return jsonobj;
 	}
 }
