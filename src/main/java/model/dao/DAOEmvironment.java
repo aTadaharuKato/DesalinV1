@@ -16,6 +16,7 @@ public final class DAOEmvironment {
 	
 	static final String SQL2 = "SELECT * FROM t_environment WHERE device_id = ? ORDER BY rec_id DESC LIMIT 1";
 	
+	private static final ElemEnvironmentSensor BLANK_ENV_DATA = new ElemEnvironmentSensor(0.0, 0, 0.0, new Date(0));
 	
 	public static ElemEnvironmentSensor getLastDataByDeviceId(String deviceId) throws Exception {
 		try (Connection con = MyConnection.getConnection(); PreparedStatement pstmt = con.prepareStatement(SQL2)) {
@@ -38,7 +39,8 @@ public final class DAOEmvironment {
 					//System.out.println("dt:" + dt);
 					return new ElemEnvironmentSensor(temperature, humidity, pressure, dt);
 				} else {
-					throw new Exception("The specified device ID is not registered.");
+					//throw new Exception("The specified device ID is not registered.");
+					return BLANK_ENV_DATA;
 				}
 			}
 		}

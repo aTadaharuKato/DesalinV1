@@ -3,6 +3,7 @@ package model;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.TimeZone;
 
 import org.json.JSONArray;
@@ -12,6 +13,7 @@ import model.dao.DAOEmvironment;
 import model.dao.DAOHeartBeat;
 import model.dao.DAOPassword;
 import model.dao.DAOTemperature;
+import model.dao.DAOUserToken;
 
 public final class Operation {
 	private Operation() {
@@ -22,7 +24,19 @@ public final class Operation {
 	public static final int ERROR_ACCESSTOKEN_NOT_MATCH = 2;
 	public static final int ERROR_ACCESSTOKEN_IS_EXPIRED = 3;
 
-	public static boolean checkUserAndDevice(String userId, String password, String deviceName, JSONObject myJsonObj) throws Exception {
+	
+	/**
+	 * デバイスの所有者をデータベースより読み出し，それが引数の userId と一致するか確認します。
+	 * 一致しない場合は，false を返却します。
+	 * 一致する場合は，ユーザパスワードを確認します。パスワードも一致する場合は true を返却します。
+	 * @param userId
+	 * @param password
+	 * @param deviceName
+	 * @param myJsonObj
+	 * @return
+	 * @throws Exception
+	 */
+	private static boolean checkUserAndDevice(String userId, String password, String deviceName, JSONObject myJsonObj) throws Exception {
 		String owner = DAODevice.getOwnerByDeviceId(deviceName);
 		//System.out.println("owner:" + owner);
 		if (!owner.equals(userId)) {
@@ -30,8 +44,45 @@ public final class Operation {
 			myJsonObj.putOpt("result", "failed, The user is not the device owner.");
 			return false;
 		}
+		return checkUser(userId, password, myJsonObj);
+		/*
 		String original_password = DAOPassword.getPasswordByUserId(userId);
 		//System.out.println("original_password:" + original_password);
+		if (original_password == null) {
+			myJsonObj.putOpt("result", "failed, The user is not exist.");
+		}
+		if (!original_password.equals(password)) {
+			// パスワードが一致しない.
+			myJsonObj.putOpt("result", "failed, Passwords do not match.");
+			return false;
+		}
+		return true;
+		*/
+	}
+	
+	private static boolean checkUserTokenAndDevices(String userToken, String[] deviceNames, JSONObject myJsonObj) throws Exception {
+		String userId = DAOUserToken.getUserIdFromUserToken(userToken);
+		if (userId == null) {
+			myJsonObj.putOpt("result", "failed, The specified user token does not exist or has expired.");
+		}
+		for (int i = 0; i < deviceNames.length; i++) {
+			String owner = DAODevice.getOwnerByDeviceId(deviceNames[i]);
+			if (!owner.equals(userId)) {
+				// ユーザ名が，デバイスの所有者と一致しない場合.
+				myJsonObj.putOpt("result", "failed, The user is not the device owner.");
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	
+	private static boolean checkUser(String userId, String password, JSONObject myJsonObj) throws Exception {
+		String original_password = DAOPassword.getPasswordByUserId(userId);
+		if (original_password == null) {
+			myJsonObj.putOpt("result", "failed, The user is not exist.");
+			return false;
+		}
 		if (!original_password.equals(password)) {
 			// パスワードが一致しない.
 			myJsonObj.putOpt("result", "failed, Passwords do not match.");
@@ -41,7 +92,7 @@ public final class Operation {
 	}
 	
 
-	public static boolean checkAccessToken(String deviceName, String token, JSONObject myJsonObj) throws Exception {
+	private static boolean checkAccessToken(String deviceName, String token, JSONObject myJsonObj) throws Exception {
 		
 		// TODO 自動生成されたメソッド・スタブ
 		String accessToken = DAODevice.getAccessTokenByDeviceId(deviceName);
@@ -61,6 +112,13 @@ public final class Operation {
 		return true;
 	}
 
+	/**
+	 * デバイスのアクセストークンを発行します。
+	 * @param deviceName デバイス名
+	 * @param password パスワード
+	 * @return
+	 * @throws Exception
+	 */
 	public static JSONObject issueAccessTokenFromPassword(String deviceName, String password) throws Exception {
 		
 		JSONObject myJsonObj = new JSONObject();
@@ -244,6 +302,92 @@ public final class Operation {
 		myJsonObj.put("datetime", MyHelper.toUTCTimeString(rec.getDatetime()) + " UTC");
 
 		myJsonObj.putOpt("result", "success");
+		return myJsonObj;
+	}
+	
+	public static JSONObject getLastEnvDataMulti(String userToken, String[] deviceNames) throws Exception {
+		System.out.println("Operation#getLastEnvDataMulti()");
+		JSONObject myJsonObj = new JSONObject();
+		
+		if (checkUserTokenAndDevices(userToken, deviceNames, myJsonObj) == false) {
+			return myJsonObj;
+		}
+		JSONArray recArray = new JSONArray();
+		//ElemEnvironmentSensor[] recArray = new ElemEnvironmentSensor[deviceNames.length];
+		for (int i = 0; i < deviceNames.length; i++) {
+			ElemEnvironmentSensor rec = DAOEmvironment.getLastDataByDeviceId(deviceNames[i]);
+			JSONObject elem = new JSONObject();
+			elem.put("deviceId",  deviceNames[i]);
+			elem.put("temperature", rec.getTemperature());
+			elem.put("humidity", rec.getHumidity());
+			elem.put("pressure", rec.getPressure());
+			elem.put("datetime", MyHelper.toUTCTimeString(rec.getDatetime()) + " UTC");
+			recArray.put(elem);
+		}
+		myJsonObj.put("envdatas", recArray);
+		myJsonObj.putOpt("result", "success");
+		return myJsonObj;
+	}
+	
+
+
+	private static long lastCleanupTick = 0L;
+	
+	public static JSONObject userLogin(String userId, String password) throws Exception {
+		System.out.println("Operation#userLogin(userId:" + userId + ", password:" + password + ")");
+		JSONObject myJsonObj = new JSONObject();
+		
+		if (checkUser(userId, password, myJsonObj) == false) {
+			return myJsonObj;
+		}
+		
+		String userToken = MyHelper.generateToken();
+		
+		Calendar utc = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+		// アクセストークンの期限は，テスト用に短く 3 分を設定します.
+		Date userTokenLimitDate = new Date(utc.getTimeInMillis() + (MyHelper.CONFIG_USERTOKEN_VALIDTIME_IN_MINUTE * 60L * 1000L));
+		
+		DAOUserToken.addUserToken(userId, userToken, userTokenLimitDate);
+		List<String> deviceNames = DAODevice.getListOfDeviceNamesOwnedbySpecifiedUser(userId);
+		myJsonObj.putOpt("devices", deviceNames);
+		myJsonObj.putOpt("token", userToken);
+		myJsonObj.putOpt("result", "success");
+		
+		// ======= 期限切れのユーザトークンを削除する処理. 
+		long curTick = System.currentTimeMillis();
+		long elapsed = curTick - lastCleanupTick;
+		if (elapsed > 3000L) {
+			// 頻繁に実行するのもアレなので，前回の実行から 3sec 実行している場合のみ，クリーンナップを実行する.
+			lastCleanupTick = curTick;
+			new Thread() {
+				public void run() {
+					System.out.println("UserTolen Cleanup Thread started.");
+					try {
+						DAOUserToken.cleanup();
+					} catch (Throwable ignore) {}
+				}
+				
+			}.start();
+		}
+		// ========
+		
+		return myJsonObj;
+	}
+
+
+	public static JSONObject userTokenLogin(String userToken) throws Exception {
+		System.out.println("Operation#userTokenLogin(userToken:" + userToken + ")");
+		
+		JSONObject myJsonObj = new JSONObject();
+		String userId = DAOUserToken.getUserIdFromUserToken(userToken);
+		if (userId == null) {
+			myJsonObj.putOpt("result", "failed, The specified user token does not exist or has expired.");
+		} else {
+			List<String> deviceNames = DAODevice.getListOfDeviceNamesOwnedbySpecifiedUser(userId);
+			myJsonObj.putOpt("devices", deviceNames);
+			myJsonObj.putOpt("userId", userId);
+			myJsonObj.putOpt("result", "success");
+		}
 		return myJsonObj;
 	}
 }

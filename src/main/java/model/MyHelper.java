@@ -16,6 +16,8 @@ public final class MyHelper {
 	
 	/** アクセストークンの有効期限の分数です. */
 	public static final int CONFIG_ACCESSTOKEN_VALIDTIME_IN_MINUTE = 30;
+	
+	public static final int CONFIG_USERTOKEN_VALIDTIME_IN_MINUTE = 60;
 
 	private static final SimpleDateFormat SDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
 	private static final SimpleDateFormat SDF_UTC = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");

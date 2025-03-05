@@ -18,8 +18,8 @@ public final class DAOPassword {
 			try (ResultSet res = pstmt_sql1.executeQuery()) {
 				if (res.next()) {
 					password = res.getString("password");
-				} else {
-					throw new Exception("The specified user ID is not registered.");
+				//} else {
+				//	throw new Exception("The specified user ID is not registered.");
 				}
 			}
 		}

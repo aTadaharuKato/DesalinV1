@@ -3,7 +3,10 @@ package model.dao;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+
 import model.MyHelper;
 
 public final class DAODevice {
@@ -21,7 +24,28 @@ public final class DAODevice {
 	private static final String SQL8 = "SELECT refresh_token_limit  FROM m_device WHERE device_id = ?";
 	private static final String SQL_GET_OWNER_BY_DEVID = "SELECT owner FROM m_device WHERE device_id = ?";
 	
+	private static final String SQL_GET_LIST_OF_DEVICE_NAMES = "SELECT device_id FROM m_device WHERE owner = ?";
 	
+	public static List<String> getListOfDeviceNamesOwnedbySpecifiedUser(String userId) throws Exception {
+		ArrayList<String> deviceNames = new ArrayList<>();
+		try (Connection con = MyConnection.getConnection(); PreparedStatement pstmt_sql1 = con.prepareStatement(SQL_GET_LIST_OF_DEVICE_NAMES)) {
+			pstmt_sql1.setString(1, userId);
+			try (ResultSet res = pstmt_sql1.executeQuery()) {
+				while (res.next()) {
+					String devname = res.getString("device_id");
+					deviceNames.add(devname);
+				}
+			}
+		}		
+		return deviceNames;
+	}
+	
+	/**
+	 * デバイス名より，その所有者の user_id を取得します.
+	 * @param deviceId デバイス名を指定します.
+	 * @return 指定されたデバイス ID の所有者を返却します.
+	 * @throws Exception 指定されたデバイス ID がテーブルに存在しない場合.
+	 */
 	public static String getOwnerByDeviceId(String deviceId) throws Exception {
 		String owner = null;
 		try (Connection con = MyConnection.getConnection(); PreparedStatement pstmt_sql1 = con.prepareStatement(SQL_GET_OWNER_BY_DEVID)) {
@@ -61,7 +85,7 @@ public final class DAODevice {
 	/**
 	 * デバイス名に関連付けられたアクセストークンを取得します.
 	 * @param deviceId デバイス名
-	 * @return デバイス名に関連付けられたアクセストークンを返却します.
+	 * @return デバイス名に関連付けられたアクセストークンを返却します. アクセストークンが登録されていない場合は，null を返却します.
 	 * @throws Exception 'm_device' テーブルに，デバイス名のレコードが存在しなかった場合.
 	 */
 	public static String getAccessTokenByDeviceId(String deviceId) throws Exception {
@@ -168,6 +192,12 @@ public final class DAODevice {
 //		return update_dt;
 //	}
 	
+	/**
+	 * 指定デバイスのアクセストークンの期限を取得します.
+	 * @param deviceId
+	 * @return
+	 * @throws Exception
+	 */
 	public static Date getAccessTokenLimitByDeviceId(String deviceId) throws Exception {
 		java.util.Date access_token_limit;
 		try (Connection con = MyConnection.getConnection(); PreparedStatement pstmt = con.prepareStatement(SQL7)) {
