@@ -10,9 +10,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import model.dao.DAODevice;
 import model.dao.DAOEmvironment;
-import model.dao.DAOHeartBeat;
 import model.dao.DAOPassword;
-import model.dao.DAOTemperature;
 import model.dao.DAOUserToken;
 
 public final class Operation {
@@ -206,61 +204,61 @@ public final class Operation {
 		return myJsonObj;
 	}
 
-	public static JSONObject registNewData(String deviceName, String token, Date datetime, double temperature, int heartbeat) throws Exception {
-		JSONObject myJsonObj = new JSONObject();
-		if (checkAccessToken(deviceName, token, myJsonObj) == false) {
-			return myJsonObj;
-		}
-		if (temperature != Double.NaN) {
-			DAOTemperature.registNewData(deviceName, temperature, datetime);
-		}
-		if (heartbeat != Integer.MIN_VALUE) {
-			DAOHeartBeat.registNewData(deviceName, heartbeat, datetime);
-		}
-		myJsonObj.putOpt("result", "success");
-		return myJsonObj;
-	}
+//	public static JSONObject registNewData(String deviceName, String token, Date datetime, double temperature, int heartbeat) throws Exception {
+//		JSONObject myJsonObj = new JSONObject();
+//		if (checkAccessToken(deviceName, token, myJsonObj) == false) {
+//			return myJsonObj;
+//		}
+//		if (temperature != Double.NaN) {
+//			DAOTemperature.registNewData(deviceName, temperature, datetime);
+//		}
+//		if (heartbeat != Integer.MIN_VALUE) {
+//			DAOHeartBeat.registNewData(deviceName, heartbeat, datetime);
+//		}
+//		myJsonObj.putOpt("result", "success");
+//		return myJsonObj;
+//	}
 
-	public static JSONObject registNewDataArray(String deviceName, String token, JSONArray array) throws Exception {
-		System.out.println("Operation#registNewDataArray()");
-		JSONObject myJsonObj = new JSONObject();
-		if (checkAccessToken(deviceName, token, myJsonObj) == false) {
-			return myJsonObj;
-		}
-		
-		
-		System.out.println("array:" + array);
-		System.out.println("array length:" + array.length());
-		ArrayList<ElemTemperature> tempArray = new ArrayList<>();
-		ArrayList<ElemHeartBeat> hbeatArray = new ArrayList<>();
-		for (int i = 0; i < array.length(); i++) {
-			JSONObject obj = array.getJSONObject(i);
-			System.out.println("[" + i + "] " + obj);
-			Date datetime = MyHelper.getDatefromDateTimeStringWithTZ(obj.optString("datetime"));
-			if (datetime == null) {
-				throw new Exception("bad datetime");
-			}
-			double temperature = obj.optDouble("temperature", Double.NaN);
-			if (temperature != Double.NaN) {
-				tempArray.add(new ElemTemperature(temperature, datetime));
-			}
-			int heartbeat = obj.optInt("heartbeat", Integer.MIN_VALUE);
-			if (heartbeat != Integer.MIN_VALUE) {
-				hbeatArray.add(new ElemHeartBeat(heartbeat, datetime));
-			}
-			System.out.println("datetime:" + datetime);
-		}
-		System.out.println("tempArray:" + tempArray);
-		System.out.println("hbeatArray:" + hbeatArray);
-		if (!tempArray.isEmpty()) {
-			DAOTemperature.registNewDataArray(deviceName, tempArray);
-		}
-		if (!hbeatArray.isEmpty()) {
-			DAOHeartBeat.registNewDataArray(deviceName, hbeatArray);
-		}
-		myJsonObj.putOpt("result", "success");
-		return myJsonObj;
-	}
+//	public static JSONObject registNewDataArray(String deviceName, String token, JSONArray array) throws Exception {
+//		System.out.println("Operation#registNewDataArray()");
+//		JSONObject myJsonObj = new JSONObject();
+//		if (checkAccessToken(deviceName, token, myJsonObj) == false) {
+//			return myJsonObj;
+//		}
+//		
+//		
+//		System.out.println("array:" + array);
+//		System.out.println("array length:" + array.length());
+//		ArrayList<ElemTemperature> tempArray = new ArrayList<>();
+//		ArrayList<ElemHeartBeat> hbeatArray = new ArrayList<>();
+//		for (int i = 0; i < array.length(); i++) {
+//			JSONObject obj = array.getJSONObject(i);
+//			System.out.println("[" + i + "] " + obj);
+//			Date datetime = MyHelper.getDatefromDateTimeStringWithTZ(obj.optString("datetime"));
+//			if (datetime == null) {
+//				throw new Exception("bad datetime");
+//			}
+//			double temperature = obj.optDouble("temperature", Double.NaN);
+//			if (temperature != Double.NaN) {
+//				tempArray.add(new ElemTemperature(temperature, datetime));
+//			}
+//			int heartbeat = obj.optInt("heartbeat", Integer.MIN_VALUE);
+//			if (heartbeat != Integer.MIN_VALUE) {
+//				hbeatArray.add(new ElemHeartBeat(heartbeat, datetime));
+//			}
+//			System.out.println("datetime:" + datetime);
+//		}
+//		System.out.println("tempArray:" + tempArray);
+//		System.out.println("hbeatArray:" + hbeatArray);
+//		if (!tempArray.isEmpty()) {
+//			DAOTemperature.registNewDataArray(deviceName, tempArray);
+//		}
+//		if (!hbeatArray.isEmpty()) {
+//			DAOHeartBeat.registNewDataArray(deviceName, hbeatArray);
+//		}
+//		myJsonObj.putOpt("result", "success");
+//		return myJsonObj;
+//	}
 
 	public static JSONObject registNewEnvDataArray(String deviceName, String token, JSONArray array) throws Exception {
 		System.out.println("Operation#registNewEnvDataArray()");
