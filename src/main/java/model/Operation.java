@@ -8,6 +8,8 @@ import java.util.TimeZone;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+
+import jakarta.servlet.http.HttpSession;
 import model.dao.DAODevice;
 import model.dao.DAOEmvironment;
 import model.dao.DAOPassword;
@@ -303,12 +305,34 @@ public final class Operation {
 		return myJsonObj;
 	}
 	
-	public static JSONObject getLastEnvDataMulti(String userToken, String[] deviceNames) throws Exception {
+	public static JSONObject getLastEnvDataMulti(String userToken, String[] deviceNames, HttpSession session) throws Exception {
 		System.out.println("Operation#getLastEnvDataMulti()");
 		JSONObject myJsonObj = new JSONObject();
-		
-		if (checkUserTokenAndDevices(userToken, deviceNames, myJsonObj) == false) {
-			return myJsonObj;
+
+		// データベースのアクセスを減らすため，セッションスコープに既知のユーザトークンとデバイス名を保存しておく。
+		// それと引数が一致するならば，checkUserTokenAndDevices() を省略できる。
+		boolean fMatchKnownDevNames = false;
+		String knownUserToken = (String) session.getAttribute("userToken");
+		if ((knownUserToken != null) && (knownUserToken.equals(userToken))) {
+			String[] knownDevNames = (String[]) session.getAttribute("deviceNames");
+			System.out.println("knownDeviceNames:" + knownDevNames);
+			if ((knownDevNames != null) && (knownDevNames.length == deviceNames.length)) {
+				fMatchKnownDevNames = true;
+				for (int i = 0; i < knownDevNames.length; i++) {
+					if (knownDevNames[i].equals(deviceNames[i]) == false) {
+						fMatchKnownDevNames = false;
+						break;
+					}
+				}
+			}
+		}
+		System.out.println("fMatchKnownDevNames:" + fMatchKnownDevNames);
+		if (fMatchKnownDevNames == false) {
+			if (checkUserTokenAndDevices(userToken, deviceNames, myJsonObj) == false) {
+				return myJsonObj;
+			}
+			session.setAttribute("userToken", userToken);
+			session.setAttribute("deviceNames", deviceNames);
 		}
 		JSONArray recArray = new JSONArray();
 		//ElemEnvironmentSensor[] recArray = new ElemEnvironmentSensor[deviceNames.length];

@@ -5,6 +5,7 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import model.MyHelper;
 import model.Operation;
 
@@ -38,10 +39,11 @@ public class GetLastEnvDataMultiServlet extends HttpServlet {
 		
 		response.setContentType("application/json; charset=UTF-8");
 		response.setHeader("Access-Control-Allow-Origin", "*");
+		HttpSession session = request.getSession();
 
 		JSONObject ret;
 		try {
-			ret = Operation.getLastEnvDataMulti(userToken, strDevArray);
+			ret = Operation.getLastEnvDataMulti(userToken, strDevArray, session);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new ServletException("こまったちゃん");
