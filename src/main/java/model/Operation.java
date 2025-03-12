@@ -305,6 +305,37 @@ public final class Operation {
 		return myJsonObj;
 	}
 	
+	
+	public static JSONObject getSpecifiedPeriodEnvDatas(String userToken, String deviceName, 
+														Date datetime_from, Date datetime_until, 
+														HttpSession session) throws Exception {
+		System.out.println("Operation#getSpecifiedPeriodEnvDatas()");
+		JSONObject myJsonObj = new JSONObject();
+		String[] deviceNames = { deviceName };
+		
+		if (checkUserTokenAndDevices(userToken, deviceNames, myJsonObj) == false) {
+			return myJsonObj;
+		}
+		
+		ElemEnvironmentSensor[] envArray = DAOEmvironment.getSpecifiedPeriodEnvDatas(deviceName, datetime_from, datetime_until);
+		JSONArray recArray = new JSONArray();
+		for (int i = 0; i < envArray.length; i++) {
+			JSONObject elem = new JSONObject();
+			ElemEnvironmentSensor env = envArray[i];
+			//elem.put("deviceId",  deviceNames[i]);
+			elem.put("temperature", env.getTemperature());
+			elem.put("humidity", env.getHumidity());
+			elem.put("pressure", env.getPressure());
+			elem.put("datetime", MyHelper.toUTCTimeString(env.getDatetime()) + " UTC");
+			recArray.put(elem);
+		}
+		myJsonObj.put("envdatas", recArray);
+		
+		
+		myJsonObj.putOpt("result", "success");
+		return myJsonObj;
+	}
+	
 	public static JSONObject getLastEnvDataMulti(String userToken, String[] deviceNames, HttpSession session) throws Exception {
 		System.out.println("Operation#getLastEnvDataMulti()");
 		JSONObject myJsonObj = new JSONObject();

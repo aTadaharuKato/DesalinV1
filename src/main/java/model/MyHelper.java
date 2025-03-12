@@ -20,6 +20,7 @@ public final class MyHelper {
 	public static final int CONFIG_USERTOKEN_VALIDTIME_IN_MINUTE = 60;
 
 	private static final SimpleDateFormat SDF = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
+	private static final SimpleDateFormat SDFX = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss X");
 	private static final SimpleDateFormat SDF_UTC = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	
 	static {
@@ -77,7 +78,11 @@ public final class MyHelper {
 		try {
 			return SDF.parse(dateTimeStr);
 		} catch (ParseException e) {
-			return null;
+			try {
+				return SDFX.parse(dateTimeStr);
+			} catch (ParseException e1) {
+				return null;
+			}
 		}	
 	}
 
