@@ -1,5 +1,7 @@
 package model.dao;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -11,8 +13,27 @@ public final class MyConnection {
 	//private final static String URL = "jdbc:mysql://raspi.local/test2025a?characterEncoding=UTF-8&serverTimezone=Asia/Tokyo";
 	//private final static String URL = "jdbc:mariadb://raspi.local/test2025a?characterEncoding=UTF-8&serverTimezone=Asia/Tokyo";
 	//private final static String URL = "jdbc:mariadb://192.168.11.1/test2025a?characterEncoding=UTF-8&serverTimezone=Asia/Tokyo";
-	private final static String URL = "jdbc:mariadb://localhost/test2025a?characterEncoding=UTF-8&serverTimezone=Asia/Tokyo";
+	//private final static String URL = "jdbc:mariadb://localhost/test2025a?characterEncoding=UTF-8&serverTimezone=Asia/Tokyo";
+	private final static String URL;
 	
+	static {
+		String dbHostName = "localhost";
+		String s2 = System.getenv("DESALIN_DB_HOST");
+		if (s2 != null) {
+			dbHostName = s2;
+		} else {
+			String myHostName = "UNKNOWN";
+			try {
+				myHostName = InetAddress.getLocalHost().getHostName();
+			} catch (UnknownHostException ignore) {
+			}
+			if (myHostName.equals("otou_pc")) {
+				dbHostName = "raspi.local";
+			}
+		}
+		URL = "jdbc:mariadb://" + dbHostName + "/test2025a?characterEncoding=UTF-8&serverTimezone=Asia/Tokyo";
+		System.out.println("MyConnection#<sinit>, dbHostName:" + dbHostName);
+	}
 	
 	/**
 	 * 接続ユーザ
